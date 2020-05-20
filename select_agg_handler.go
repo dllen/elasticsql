@@ -69,7 +69,7 @@ func handleGroupByColName(colName *sqlparser.ColName, index int, child msi) msi 
 	} else {
 		innerMap["terms"] = msi{
 			"field": colName.Name.String(),
-			"size":  0,
+			"size":  200,
 		}
 	}
 
