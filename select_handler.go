@@ -49,6 +49,7 @@ func handleSelect(sel *sqlparser.Select) (dsl string, esType string, err error) 
 	// to not return any query result
 
 	var aggStr string
+	var sourceStr string
 	if len(sel.GroupBy) > 0 || checkNeedAgg(sel.SelectExprs) {
 		aggFlag = true
 		querySize = "0"
@@ -56,6 +57,14 @@ func handleSelect(sel *sqlparser.Select) (dsl string, esType string, err error) 
 		if err != nil {
 			//aggStr = ""
 			return "", "", err
+		}
+	} else {
+		if len(sel.SelectExprs) > 0 {
+			//查询字段
+			sourceStr, err = buildSource(sel)
+			if err != nil {
+				return "", "", err
+			}
 		}
 	}
 
@@ -91,8 +100,12 @@ func handleSelect(sel *sqlparser.Select) (dsl string, esType string, err error) 
 		resultMap["sort"] = fmt.Sprintf("[%v]", strings.Join(orderByArr, ","))
 	}
 
+	if len(sourceStr) > 0 {
+		resultMap["_source"] = sourceStr
+	}
+
 	// keep the travesal in order, avoid unpredicted json
-	var keySlice = []string{"query", "from", "size", "sort", "aggregations"}
+	var keySlice = []string{"query", "from", "size", "sort", "aggregations", "_source"}
 	var resultArr []string
 	for _, mapKey := range keySlice {
 		if val, ok := resultMap[mapKey]; ok {

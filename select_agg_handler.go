@@ -287,6 +287,32 @@ func buildAggs(sel *sqlparser.Select) (string, error) {
 	return string(mapJSON), nil
 }
 
+func buildSource(sel *sqlparser.Select) (string, error) {
+	selectExprs := sel.SelectExprs
+	var fields []string
+	for _, v := range selectExprs {
+		expr, ok := v.(*sqlparser.AliasedExpr)
+		if !ok {
+			continue
+		}
+		// NonStarExpr start
+		switch expr.Expr.(type) {
+		case *sqlparser.FuncExpr:
+			continue
+		case *sqlparser.ColName:
+			col := expr.Expr.(*sqlparser.ColName)
+			fields = append(fields, col.Name.String())
+		default:
+			//ignore
+		}
+	}
+	if len(fields) > 0 {
+		fieldsJson, _ := json.Marshal(fields)
+		return string(fieldsJson), nil
+	}
+	return "", nil
+}
+
 // extract func expressions from select exprs
 func extractFuncAndColFromSelect(sqlSelect sqlparser.SelectExprs) ([]*sqlparser.FuncExpr, []*sqlparser.ColName, error) {
 	var colArr []*sqlparser.ColName
